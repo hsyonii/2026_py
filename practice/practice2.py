@@ -1,6 +1,6 @@
 import numpy as np
 # [기본 제공 코드] CSV 파일 로드 (헤더 제외, 콤마 구분)
-data = np.genfromtxt('./day1027/customer_purchase_data.csv', delimiter=',', skip_header=1)
+data = np.genfromtxt('./practice/customer_purchase_data.csv', delimiter=',', skip_header=1)
 # 데이터 구조 확인: [ID, Visits, Stay_Time, Cart_Items, Purchase_Amount]
 print(f"데이터 형태: {data.shape}")
 

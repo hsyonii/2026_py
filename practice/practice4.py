@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 
 # [기본 제공 코드] CSV 파일 로드 및 구조 확인
-df = pd.read_csv('./day1028/ecommerce_orders_cs_data.csv', encoding='utf-8-sig')
+df = pd.read_csv('./practice/ecommerce_orders_cs_data.csv', encoding='utf-8-sig')
 
 print("--- [데이터 기본 구조 확인] ---")
 print(df.info())
