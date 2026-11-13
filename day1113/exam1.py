@@ -74,3 +74,6 @@ model = RandomForestClassifier(
 model.fit(X_train,Y_train)
 print("Train Acc: ",model.score(X_train, Y_train))
 print("Test Acc: ", model.score(X_test,Y_test))
+
+print(model.feature_names_in_)
+print(model.feature_importances_)
