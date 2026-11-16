@@ -60,7 +60,7 @@ print(model.feature_importances_) # 피처별 예측 기여의 중요도
 # - 배깅? 여러모델을 병렬학습 -> 모델별 결과를 보팅/확률평균 통해 결과, 랜덤 포레스트
 # - 부스팅 ? 직렬 학습 -> 이전모델의 오답에 가중치 부여하여 다음 모델이 학습.
 
-# 1) 랜덤 포레스트( 배깅 ) 
+# 1) 배깅 - 랜덤 포레스트 
 from sklearn.ensemble import RandomForestClassifier
 model = RandomForestClassifier(
     max_depth=3,

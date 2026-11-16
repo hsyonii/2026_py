@@ -18,50 +18,70 @@
 # [5. 데이터 시각화 및 분석]
 # 5-1 : 생존 분포 분석: 전체 생존자와 사망자의 비중을 파악할 수 있는 막대그래프 를 생성한다.
 # 5-2 : 연령대별 상세 분석:나이에 따른 생존/사망 분포를 히스토그램으로 시각화한다.데이터의 흐름을 파악할 수 있도록 커널 밀도 추정 곡선(KDE)을 포함한다.
-# 5-4 (성별): sns.countplot을 사용하여 성별(Sex)에 따른 생존 여부(Survived)별 인원수를 시각화한다.
-# 5-5 (객실 등급): sns.countplot을 사용하여 객실 등급(Pclass)에 따른 생존 여부(Survived)별 인원수를 시각화한다.
-# 5-6 (승선 항구): sns.countplot을 사용하여 승선 항구(Embarked)에 따른 생존 여부(Survived)별 인원수를 시각화한다.
+# 5-4 (성별): plt.bar을 사용하여 성별(Sex)에 따른 생존 여부(Survived)별 인원수를 시각화한다.
+# 5-5 (객실 등급): plt.bar을 사용하여 객실 등급(Pclass)에 따른 생존 여부(Survived)별 인원수를 시각화한다.
+# 5-6 (승선 항구): plt.bar을 사용하여 승선 항구(Embarked)에 따른 생존 여부(Survived)별 인원수를 시각화한다.
+from pathlib import Path
 
-import os
+import numpy as np
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
+from scipy.stats import gaussian_kde
 
-OUTPUT_DIR = 'C:/2026_py/py_practice/practice6_results'
-
-sns.set_theme(style='whitegrid', font='Malgun Gothic')
+OUTPUT_DIR = Path(__file__).resolve().with_name('practice6_results')
+OUTPUT_DIR.mkdir(exist_ok=True)
+plt.rcParams['font.family'] = 'Malgun Gothic'
 plt.rcParams['axes.unicode_minus'] = False
-os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# 문제1 자료수집 및 전처리: 나이 중앙값, 승선 항구 최빈값
-df = pd.read_csv('C:/2026_py/py_practice/train.csv')
+df = pd.read_csv('./py_practice/train.csv')
+
+# [4. 데이터 전처리]
 df['Age'] = df['Age'].fillna(df['Age'].median())
 df['Embarked'] = df['Embarked'].fillna(df['Embarked'].mode().iloc[0])
 
 # 5-1. 전체 생존/사망 분포
-fig, ax = plt.subplots(figsize=(7, 5))
-sns.countplot(data=df, x='Survived', order=[0, 1], ax=ax)
-ax.set(title='생존 분포', xlabel='생존 여부 (0: 사망, 1: 생존)', ylabel='인원수')
-fig.tight_layout()
-fig.savefig('C:/2026_py/py_practice/practice6_results/titanic_survival.png', dpi=150)
-plt.close(fig)
+counts = df['Survived'].value_counts().reindex([0, 1], fill_value=0)
+plt.figure(figsize=(7, 5))
+plt.title('(전체) 생존자 분포')
+plt.bar(['사망', '생존'], counts.values)
+plt.xlabel('생존 여부')
+plt.ylabel('인원수')
+plt.tight_layout()
+plt.show()
 
 # 5-2. 연령별 생존/사망 히스토그램과 KDE
-fig, ax = plt.subplots(figsize=(9, 5))
-sns.histplot(data=df, x='Age', hue='Survived', bins=30, kde=True, ax=ax)
-ax.set_title('나이에 따른 생존/사망 분포')
-fig.tight_layout()
-fig.savefig('C:/2026_py/py_practice/practice6_results/titanic_age.png', dpi=150)
-plt.close(fig)
+bins = np.linspace(df['Age'].min(), df['Age'].max(), 31)
+ages = np.linspace(bins[0], bins[-1], 200)
+plt.figure(figsize=(9, 5))
+for survived, label in [(0, '사망'), (1, '생존')]:
+    group = df.loc[df['Survived'].eq(survived), 'Age']
+    plt.hist(group, bins=bins, alpha=0.4, label=label)
+    # KDE 밀도를 히스토그램의 인원수 단위로 환산
+    if len(group) > 1 and group.nunique() > 1:
+        density = gaussian_kde(group)(ages)
+        plt.plot(ages, density * len(group) * (bins[1] - bins[0]))
+plt.title('나이에 따른 생존/사망 분포')
+plt.xlabel('나이')
+plt.ylabel('인원수')
+plt.legend()
+plt.tight_layout()
+plt.show()
 
 # 5-4~5-6. 성별, 객실 등급, 승선 항구별 생존 여부
-fig, axes = plt.subplots(1, 3, figsize=(17, 5))
-for ax, column in zip(axes, ['Sex', 'Pclass', 'Embarked']):
-    sns.countplot(data=df, x=column, hue='Survived', ax=ax)
-    ax.set_title(f'{column}별 생존 여부')
-fig.tight_layout()
-fig.savefig('C:/2026_py/py_practice/practice6_results/titanic_groups.png', dpi=150)
-plt.close(fig)
+plt.figure(figsize=(17, 5))
+for position, column in enumerate(['Sex', 'Pclass', 'Embarked'], start=1):
+    counts = pd.crosstab(df[column], df['Survived']).reindex(columns=[0, 1], fill_value=0)
+    x = np.arange(len(counts))
+    plt.subplot(1, 3, position)
+    plt.bar(x - 0.2, counts[0], width=0.4, label='사망')
+    plt.bar(x + 0.2, counts[1], width=0.4, label='생존')
+    plt.xticks(x, counts.index)
+    plt.title(f'{column}별 생존 여부')
+    plt.xlabel(column)
+    plt.ylabel('인원수')
+    plt.legend()
+plt.tight_layout()
+plt.show()
 
 # 가설1: 아동은 18세 미만으로 정의하여 성인 남성/여성과 비교
 df['비교 집단'] = '성인 남성'
@@ -96,10 +116,10 @@ print('\n항구/등급별 생존율\n', df.pivot_table(index='Embarked', columns
 # 4-4 (파생변수): 대여일시에서 시간(Hour) 정보를 추출하여 '대여 시간대' 열을 새롭게 생성한다.
 
 # [5. 데이터 시각화 및 분석]
-# 5-1 (성별 분포): sns.countplot을 사용하여 성별에 따른 따릉이 이용 비중을 시각화한다.
-# 5-2 (시간대 분석): sns.barplot을 사용하여 24시간 중 어느 시간대에 대여가 집중되는지 분석한다.
+# 5-1 (성별 분포): plt.bar을 사용하여 성별에 따른 따릉이 이용 비중을 시각화한다.
+# 5-2 (시간대 분석): plt.bar을 사용하여 24시간 중 어느 시간대에 대여가 집중되는지 분석한다.
 # 5-3 (인기 대여소): value_counts().head(10)를 활용하여 가장 활발한 상위 10개 대여소를 가로 막대 그래프로 시각화한다.
-# 5-4 (상관관계): sns.heatmap을 통해 이용시간, 이용거리, 시간대 등 수치 데이터 간의 밀접도를 분석한다.
+# 5-4 (상관관계): plt.imshow을 통해 이용시간, 이용거리, 시간대 등 수치 데이터 간의 밀접도를 분석한다.
 
 # 문제2 자료수집: 필요한 열만 읽어 메모리 사용량 절감
 columns = ['대여일시', '대여 대여소명', '성별', '이용시간(분)', '이용거리(M)']
@@ -121,40 +141,54 @@ data['대여일시'] = pd.to_datetime(data['대여일시'], errors='coerce')
 data['대여 시간대'] = data['대여일시'].dt.hour
 
 # 5-1. 성별 이용 건수 (고유 이용자 수와는 다름)
-fig, ax = plt.subplots(figsize=(7, 5))
-sns.countplot(data=data, x='성별', ax=ax)
-ax.set(title='성별 따릉이 이용 건수', ylabel='대여 건수')
-fig.tight_layout()
-fig.savefig('C:/2026_py/py_practice/practice6_results/bike_gender.png', dpi=150)
-plt.close(fig)
+gender_counts = data['성별'].value_counts().sort_index()
+plt.figure(figsize=(7, 5))
+plt.bar(gender_counts.index, gender_counts.values)
+plt.title('성별 따릉이 이용 건수')
+plt.xlabel('성별')
+plt.ylabel('대여 건수')
+plt.tight_layout()
+plt.show()
 
 # 5-2. 0~23시 대여량 barplot
 hourly = data['대여 시간대'].value_counts().reindex(range(24), fill_value=0).sort_index()
 hourly_table = hourly.rename_axis('대여 시간대').reset_index(name='대여 건수')
-fig, ax = plt.subplots(figsize=(12, 5))
-sns.barplot(data=hourly_table, x='대여 시간대', y='대여 건수', ax=ax)
-ax.set_title('시간대별 따릉이 대여 건수')
-fig.tight_layout()
-fig.savefig('C:/2026_py/py_practice/practice6_results/bike_hourly.png', dpi=150)
-plt.close(fig)
+plt.figure(figsize=(12, 5))
+plt.bar(hourly.index, hourly.values)
+plt.xticks(range(24))
+plt.title('시간대별 따릉이 대여 건수')
+plt.xlabel('대여 시간대')
+plt.ylabel('대여 건수')
+plt.tight_layout()
+plt.show()
 
 # 5-3. 인기 대여소 상위 10곳 가로 막대그래프
 top10 = data['대여 대여소명'].value_counts().head(10)
-fig, ax = plt.subplots(figsize=(12, 7))
-sns.barplot(x=top10.values, y=top10.index, ax=ax)
-ax.set(title='대여 건수 상위 10개 대여소', xlabel='대여 건수', ylabel='대여소')
-fig.tight_layout()
-fig.savefig('C:/2026_py/py_practice/practice6_results/bike_top10.png', dpi=150)
-plt.close(fig)
+plt.figure(figsize=(12, 7))
+plt.barh(top10.index, top10.values)
+plt.gca().invert_yaxis()
+plt.title('대여 건수 상위 10개 대여소')
+plt.xlabel('대여 건수')
+plt.ylabel('대여소')
+plt.tight_layout()
+plt.show()
 
 # 5-4. 이용시간, 이용거리, 시간대 상관관계 히트맵
 corr = data[['이용시간(분)', '이용거리(M)', '대여 시간대']].corr()
-fig, ax = plt.subplots(figsize=(8, 6))
-sns.heatmap(corr, annot=True, fmt='.3f', cmap='coolwarm', vmin=-1, vmax=1, center=0, ax=ax)
-ax.set_title('따릉이 이용 변수 간 상관관계')
-fig.tight_layout()
-fig.savefig('C:/2026_py/py_practice/practice6_results/bike_correlation.png', dpi=150)
-plt.close(fig)
+plt.figure(figsize=(8, 6))
+plt.imshow(corr, cmap='coolwarm', vmin=-1, vmax=1)
+plt.colorbar(label='상관계수')
+plt.xticks(range(len(corr.columns)), corr.columns)
+plt.yticks(range(len(corr.index)), corr.index)
+for row in range(len(corr.index)):
+    for col in range(len(corr.columns)):
+        value = corr.iloc[row, col]
+        if pd.notna(value):
+            plt.text(col, row, f'{value:.3f}', ha='center', va='center',
+                     color='white' if abs(value) > 0.5 else 'black')
+plt.title('따릉이 이용 변수 간 상관관계')
+plt.tight_layout()
+plt.show()
 
 print('\n[문제2] 전체 대여 건수:', len(data))
 print('\n성별 이용 비중\n', data['성별'].value_counts(normalize=True))
@@ -170,4 +204,4 @@ hourly_table.to_csv('C:/2026_py/py_practice/practice6_results/bike_hourly.csv', 
 top10.to_csv('C:/2026_py/py_practice/practice6_results/bike_top10.csv', encoding='utf-8-sig')
 corr.to_csv('C:/2026_py/py_practice/practice6_results/bike_correlation.csv', encoding='utf-8-sig')
 
-print(f'\n그래프와 분석 표 저장 위치: {OUTPUT_DIR}')
+print(f'\n분석 표 저장 위치: {OUTPUT_DIR}')
