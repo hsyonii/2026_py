@@ -21,17 +21,9 @@
 # 5-4 (성별): plt.bar을 사용하여 성별(Sex)에 따른 생존 여부(Survived)별 인원수를 시각화한다.
 # 5-5 (객실 등급): plt.bar을 사용하여 객실 등급(Pclass)에 따른 생존 여부(Survived)별 인원수를 시각화한다.
 # 5-6 (승선 항구): plt.bar을 사용하여 승선 항구(Embarked)에 따른 생존 여부(Survived)별 인원수를 시각화한다.
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import gaussian_kde
-
-OUTPUT_DIR = Path(__file__).resolve().with_name('practice6_results')
-OUTPUT_DIR.mkdir(exist_ok=True)
-plt.rcParams['font.family'] = 'Malgun Gothic'
-plt.rcParams['axes.unicode_minus'] = False
 
 df = pd.read_csv('./py_practice/train.csv')
 
@@ -96,7 +88,8 @@ for column in ['비교 집단', 'Sex', 'Pclass', 'Embarked']:
 print('\n항구별 등급 구성비\n', pd.crosstab(df['Embarked'], df['Pclass'], normalize='index'))
 print('\n항구/등급별 생존율\n', df.pivot_table(index='Embarked', columns='Pclass', values='Survived'))
 
-# # 문제2[ 서울시 공공자전거 대여이력 분석]
+###########################################################
+# 문제2[ 서울시 공공자전거 대여이력 분석]
 # 출처: 서울 열린데이터 광장
 
 # [2. 가설]
@@ -123,9 +116,9 @@ print('\n항구/등급별 생존율\n', df.pivot_table(index='Embarked', columns
 
 # 문제2 자료수집: 필요한 열만 읽어 메모리 사용량 절감
 columns = ['대여일시', '대여 대여소명', '성별', '이용시간(분)', '이용거리(M)']
-data1 = pd.read_csv('C:/2026_py/py_practice/서울특별시 공공자전거 대여이력 정보_2501.csv',
+data1 = pd.read_csv('./py_practice/서울특별시 공공자전거 대여이력 정보_2501.csv',
                     encoding='cp949', usecols=columns, dtype=str)
-data2 = pd.read_csv('C:/2026_py/py_practice/서울특별시 공공자전거 대여이력 정보_2502.csv',
+data2 = pd.read_csv('./py_practice/서울특별시 공공자전거 대여이력 정보_2502.csv',
                     encoding='cp949', usecols=columns, dtype=str)
 # 4-1. 병합 및 인덱스 재부여
 data = pd.concat([data1, data2], ignore_index=True)
@@ -196,12 +189,8 @@ print('\n시간대별 대여 건수\n', hourly)
 print('\n인기 대여소 상위 10곳\n', top10)
 print('\n상관계수\n', corr)
 print('\n대여일시 변환 실패 건수:', data['대여일시'].isna().sum())
-print('가설 해석: 출퇴근 시간과 다른 시간의 대여량을 비교한다. '
-      '상위 대여소가 지하철역 인근인지는 위치 자료로 추가 확인해야 한다. '
-      '이용시간과 거리의 상관계수로 양의 상관 강도를 판단한다. '
-      '시간대는 순환 변수이므로 선형 상관계수 해석에 주의한다.')
-hourly_table.to_csv('C:/2026_py/py_practice/practice6_results/bike_hourly.csv', index=False, encoding='utf-8-sig')
-top10.to_csv('C:/2026_py/py_practice/practice6_results/bike_top10.csv', encoding='utf-8-sig')
-corr.to_csv('C:/2026_py/py_practice/practice6_results/bike_correlation.csv', encoding='utf-8-sig')
 
-print(f'\n분석 표 저장 위치: {OUTPUT_DIR}')
+# 가설 해석: 출퇴근 시간과 다른 시간의 대여량을 비교한다. '
+# 상위 대여소가 지하철역 인근인지는 위치 자료로 추가 확인해야 한다. '
+# 이용시간과 거리의 상관계수로 양의 상관 강도를 판단한다. '
+# 시간대는 순환 변수이므로 선형 상관계수 해석에 주의한다.'
